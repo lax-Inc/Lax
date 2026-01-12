@@ -1,0 +1,54 @@
+[start
+  [spot op_raw [input "Select operation (+, -, *, /, sqrt, expt): "]]
+  [spot op [string->sign op_raw]]
+
+  [spot is_unary [eq? op [string->sign "sqrt"]]]
+  
+  [spot first_raw [if is_unary [input "Enter number: "] [input "First number: "]]]
+  [spot first_num [to-number first_raw]]
+  [spot first_ok [and [> [string-length first_raw] 0] [number? first_num]]]
+
+  [spot second_raw [if [not is_unary] [input "Second number: "] ""]]
+  [spot second_num [to-number second_raw]]
+  [spot second_ok [or is_unary [and [> [string-length second_raw] 0] [number? second_num]]]]
+
+  [spot dispatch_table
+    [list* [cons [string->sign "+"] +]
+      [cons [string->sign "-"] -]
+      [cons [string->sign "*"] *]
+      [cons [string->sign "/"] /]
+      [cons [string->sign "expt"] expt]
+      [cons [string->sign "sqrt"] sqrt]
+      []
+    ]
+  ]
+
+  [spot op_pair [assq op dispatch_table]]
+
+  [spot ans
+    [if [not first_ok] "Error: Bad first number"
+      [if [not second_ok] "Error: Bad second number"
+        [if [not op_pair] "Error: Unknown operation"
+          [start
+             [spot func [tail op_pair]]
+             
+             [if [and [eq? op [string->sign "/"]] [= second_num 0]]
+               "Error: Division by zero"
+               [if [and is_unary [< first_num 0]]
+                 "Error: Negative root"
+                 [if is_unary
+                    [func first_num]
+                    [func first_num second_num]
+                 ]
+               ]
+             ]
+          ]
+        ]
+      ]
+    ]
+  ]
+
+  [image first_raw] [image " "] [image op_raw] 
+  [if [not is_unary] [start [image " "] [image second_raw]] ""]
+  [image " = "] [image ans] [nl]
+]

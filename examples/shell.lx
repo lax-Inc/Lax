@@ -1,0 +1,64 @@
+[spot [println x]
+  [image x]
+  [nl]]
+
+[spot [is-print-cmd? str]
+  [let [[len [string-length str]]]
+    [if [>= len 6]
+        [eqv? [string->atom [substring str 0 6]] [string->atom "print "]]
+        #f]]]
+
+[spot [get-print-text str]
+  [substring str 6 [string-length str]]]
+
+[spot [string->command str]
+  [let [[a [string->atom str]]]
+    [if [sign? a] a [string->atom "unknown"]]]]
+
+[spot [shell-loop]
+  [let [[line [input "Lax$ "]]]
+
+    [if [eof-object? line] [quit]]
+
+    [if [<= [string-length line] 0]
+      [shell-loop]
+
+      [if [is-print-cmd? line]
+        [start
+          [println [get-print-text line]]
+          [shell-loop]]
+        
+        [let [[cmd [string->command line]]]
+          [chlet
+             [[eqv? cmd [string->atom "exit"]] 
+                [quit]]
+
+             [[eqv? cmd [string->atom "help"]]
+                [start
+                  [println "=== Lax Terminal Help ==="]
+                  [println "  print <text>  : Print text to output"]
+                  [println "  help          : Show this menu"]
+                  [println "  nl            : Makes a paragraph"]
+                  [println "  exit          : Exit the shell"]
+                  [nl]
+                  [shell-loop]]]
+
+             [[eqv? cmd [string->atom "nl"]]
+                [start
+                  [nl]
+                  [shell-loop]]]
+
+             [else
+                [start
+                  [image "Error: Unknown command '"] [image line] [println "'"]
+                  [shell-loop]]]]]]
+    ]
+  ]
+]
+
+[start
+  [println "Welcome to Lax Terminal!"]
+  [println "Type 'help' to get started."]
+  [nl]
+  [shell-loop]
+]

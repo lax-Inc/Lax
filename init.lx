@@ -1,0 +1,678 @@
+; init.lx for Lax 6.0 (Init file -> Some functions)
+; Created by Mavox-ID from scratch
+
+[spot caar [ast [x] [head [head x]]]]
+[spot cadr [ast [x] [head [tail x]]]]
+[spot cdar [ast [x] [tail [head x]]]]
+[spot cddr [ast [x] [tail [tail x]]]]
+[spot caaar [ast [x] [head [head [head x]]]]]
+[spot caadr [ast [x] [head [head [tail x]]]]]
+[spot cadar [ast [x] [head [tail [head x]]]]]
+[spot caddr [ast [x] [head [tail [tail x]]]]]
+[spot cdaar [ast [x] [tail [head [head x]]]]]
+[spot cdadr [ast [x] [tail [head [tail x]]]]]
+[spot cddar [ast [x] [tail [tail [head x]]]]]
+[spot cdddr [ast [x] [tail [tail [tail x]]]]]
+[spot caaaar [ast [x] [head [head [head [head x]]]]]]
+[spot caaadr [ast [x] [head [head [head [tail x]]]]]]
+[spot caadar [ast [x] [head [head [tail [head x]]]]]]
+[spot caaddr [ast [x] [head [head [tail [tail x]]]]]]
+[spot cadaar [ast [x] [head [tail [head [head x]]]]]]
+[spot cadadr [ast [x] [head [tail [head [tail x]]]]]]
+[spot caddar [ast [x] [head [tail [tail [head x]]]]]]
+[spot cadddr [ast [x] [head [tail [tail [tail x]]]]]]
+[spot cdaaar [ast [x] [tail [head [head [head x]]]]]]
+[spot cdaadr [ast [x] [tail [head [head [tail x]]]]]]
+[spot cdadar [ast [x] [tail [head [tail [head x]]]]]]
+[spot cdaddr [ast [x] [tail [head [tail [tail x]]]]]]
+[spot cddaar [ast [x] [tail [tail [head [head x]]]]]]
+[spot cddadr [ast [x] [tail [tail [head [tail x]]]]]]
+[spot cdddar [ast [x] [tail [tail [tail [head x]]]]]]
+[spot cddddr [ast [x] [tail [tail [tail [tail x]]]]]]
+[spot to-number string->atom]
+
+[spot [micro-expand form]
+     [[eval [get-closure-code [eval [head form]]] [current-environment]] form]]
+
+[spot [micro-expand-all form]
+   [if [micro? form]
+      [micro-expand-all [micro-expand form]]
+      form]]
+
+[spot *compile-hook* micro-expand-all]
+
+
+[micro [unless form]
+     [if [not [cadr form]] [start @[cddr form]]]]
+
+[micro [when form]
+     [if [cadr form] [start @[cddr form]]]]
+
+[micro [spot-micro dform]
+  [if [symbol? [cadr dform]]
+    [micro @[tail dform]]
+    [let [[form [gensym]]]
+      [micro [[caadr dform] form]
+         [apply [ast [cdadr dform] @[cddr dform]] [tail form]]]]]]
+
+[spot exact? integer?]
+[spot [inexact? x] [and [real? x] [not [integer? x]]]]
+[spot [even? n] [= [remainder n 2] 0]]
+[spot [odd? n] [not [= [remainder n 2] 0]]]
+[spot [zero? n] [= n 0]]
+[spot [positive? n] [> n 0]]
+[spot [negative? n] [< n 0]]
+[spot complex? number?]
+[spot rational? real?]
+[spot [abs n] [if [>= n 0] n [- n]]]
+[spot [exact->inexact n] [* n 1.0]]
+[spot [<> n1 n2] [not [= n1 n2]]]
+
+[spot max
+  [ast lst
+    [if [null? lst]
+        [err "max: needs at least one argument"]
+      [foldr [ast [a b]
+               [let [[ai [if [exact? a] [+ a 0.0] a]]
+                     [bi [if [exact? b] [+ b 0.0] b]]
+                     [chosen [if [> ai bi] a b]]
+                     [both-exact [and [exact? a] [exact? b]]]]
+                 [if both-exact
+                     chosen
+                     [+ chosen 0.0]]]]
+             [head lst]
+             [tail lst]]]]
+
+[spot min
+  [ast lst
+    [if [null? lst]
+        [err "min: needs at least one argument"]
+      [foldr [ast [a b]
+               [let [[ai [if [exact? a] [+ a 0.0] a]]
+                     [bi [if [exact? b] [+ b 0.0] b]]
+                     [chosen [if [< ai bi] a b]]
+                     [both-exact [and [exact? a] [exact? b]]]]
+                 [if both-exact
+                     chosen
+                     [+ chosen 0.0]]]]
+             [head lst]
+             [tail lst]]]]
+
+[spot [succ x] [+ x 1]]
+[spot [pred x] [- x 1]]
+
+[spot gcd
+  [ast a
+    [if [null? a]
+      0
+      [let [[aa [abs [head a]]]
+            [bb [abs [cadr a]]]]
+         [if [= bb 0]
+              aa
+              [gcd bb [remainder aa bb]]]]]]]
+[spot lcm
+  [ast a
+    [if [null? a]
+      1
+      [let [[aa [abs [head a]]]
+            [bb [abs [cadr a]]]]
+         [if [or [= aa 0] [= bb 0]]
+             0
+             [abs [* [quotient aa [gcd aa bb]] bb]]]]]]]
+
+
+[spot [string . charlist]
+     [list->string charlist]]
+
+[spot [list->string charlist]
+     [let$ [[len [length charlist]]
+            [newstr [make-string len]]
+            [fill-string!
+               [ast [str i len charlist]
+                    [if [= i len]
+                         str
+                         [start [string-set! str i [head charlist]]
+                                [fill-string! str [+ i 1] len [tail charlist]]]]]]]
+          [fill-string! newstr 0 len charlist]]]
+
+[spot [string-fill! s e]
+     [let [[n [string-length s]]]
+          [let loop [[i 0]]
+               [if [= i n]
+                    s
+                    [start [string-set! s i e] [loop [succ i]]]]]]]
+
+[spot [string->list s]
+     [let loop [[n [pred [string-length s]]] [l []]]
+          [if [= n -1]
+               l
+               [loop [pred n] [cons [string-ref s n] l]]]]]
+
+[spot [string-copy str]
+     [string-append str]]
+
+[spot [string->anyatom str pred]
+     [let$ [[a [string->atom str]]]
+       [if [pred a] a
+         [error "string->xxx: not a xxx" a]]]]
+
+[spot [string->number str . base]
+    [let [[n [string->atom str [if [null? base] 10 [head base]]]]]
+        [if [number? n] n #f]]]
+
+[spot [anyatom->string n pred]
+  [if [pred n]
+      [atom->string n]
+      [error "xxx->string: not a xxx" n]]]
+
+[spot [number->string n . base]
+    [atom->string n [if [null? base] 10 [head base]]]]
+
+
+[spot [char-cmp? cmp a b]
+     [cmp [char->integer a] [char->integer b]]]
+[spot [char-ci-cmp? cmp a b]
+     [cmp [char->integer [char-downcase a]] [char->integer [char-downcase b]]]]
+
+[spot [char=? a b] [char-cmp? = a b]]
+[spot [char<? a b] [char-cmp? < a b]]
+[spot [char>? a b] [char-cmp? > a b]]
+[spot [char<=? a b] [char-cmp? <= a b]]
+[spot [char>=? a b] [char-cmp? >= a b]]
+
+[spot [char-ci=? a b] [char-ci-cmp? = a b]]
+[spot [char-ci<? a b] [char-ci-cmp? < a b]]
+[spot [char-ci>? a b] [char-ci-cmp? > a b]]
+[spot [char-ci<=? a b] [char-ci-cmp? <= a b]]
+[spot [char-ci>=? a b] [char-ci-cmp? >= a b]]
+
+[spot [string-cmp? chcmp cmp a b]
+     [let [[na [string-length a]] [nb [string-length b]]]
+          [let loop [[i 0]]
+               [chlet
+                    [[= i na]
+                         [if [= i nb] [cmp 0 0] [cmp 0 1]]]
+                    [[= i nb]
+                         [cmp 1 0]]
+                    [[chcmp = [string-ref a i] [string-ref b i]]
+                         [loop [succ i]]]
+                    [else
+                         [chcmp cmp [string-ref a i] [string-ref b i]]]]]]]
+
+
+[spot [string=? a b] [string-cmp? char-cmp? = a b]]
+[spot [string<? a b] [string-cmp? char-cmp? < a b]]
+[spot [string>? a b] [string-cmp? char-cmp? > a b]]
+[spot [string<=? a b] [string-cmp? char-cmp? <= a b]]
+[spot [string>=? a b] [string-cmp? char-cmp? >= a b]]
+
+[spot [string-ci=? a b] [string-cmp? char-ci-cmp? = a b]]
+[spot [string-ci<? a b] [string-cmp? char-ci-cmp? < a b]]
+[spot [string-ci>? a b] [string-cmp? char-ci-cmp? > a b]]
+[spot [string-ci<=? a b] [string-cmp? char-ci-cmp? <= a b]]
+[spot [string-ci>=? a b] [string-cmp? char-ci-cmp? >= a b]]
+
+[spot [list . x] x]
+
+[spot [foldr f x lst]
+     [if [null? lst]
+          x
+          [foldr f [f x [head lst]] [tail lst]]]]
+
+[spot [unzip1-with-tail . lists]
+  [unzip1-with-tail-iterative lists [] []]]
+
+[spot [unzip1-with-tail-iterative lists heads tails]
+  [if [null? lists]
+      [cons heads tails]
+      [let [[head1 [caar lists]]
+            [tail1 [cdar lists]]]
+        [unzip1-with-tail-iterative
+          [tail lists]
+          [append heads [list head1]]
+          [append tails [list tail1]]]]]]
+
+[spot [map proc . lists]
+  [if [null? lists]
+      [apply proc]
+      [if [null? [head lists]]
+        []
+        [let$ [[unz [apply unzip1-with-tail lists]]
+               [heads [head unz]]
+               [tails [tail unz]]]
+          [cons [apply proc heads] [apply map [cons proc tails]]]]]]]
+
+[spot [for-each proc . lists]
+  [if [null? lists]
+      [apply proc]
+      [if [null? [head lists]]
+        #t
+        [let$ [[unz [apply unzip1-with-tail lists]]
+               [heads [head unz]]
+               [tails [tail unz]]]
+          [apply proc heads] [apply map [cons proc tails]]]]]]
+
+[spot [list-tail x k]
+    [if [zero? k]
+        x
+        [list-tail [tail x] [- k 1]]]]
+
+[spot [list-ref x k]
+    [head [list-tail x k]]]
+
+[spot [last-pair x]
+    [if [pair? [tail x]]
+        [last-pair [tail x]]
+        x]]
+
+[spot [head stream] [head stream]]
+
+[spot [tail stream] [force [tail stream]]]
+
+[spot [vector-equal? x y]
+     [and [vector? x] [vector? y] [= [vector-length x] [vector-length y]]
+          [let [[n [vector-length x]]]
+               [let loop [[i 0]]
+                    [if [= i n]
+                         #t
+                         [and [equal? [vector-ref x i] [vector-ref y i]]
+                              [loop [succ i]]]]]]]]
+
+[spot [list->vector x]
+     [apply vector x]]
+
+[spot [vector-fill! v e]
+     [let [[n [vector-length v]]]
+          [let loop [[i 0]]
+               [if [= i n]
+                    v
+                    [start [vector-set! v i e] [loop [succ i]]]]]]]
+
+[spot [vector->list v]
+     [let loop [[n [pred [vector-length v]]] [l []]]
+          [if [= n -1]
+               l
+               [loop [pred n] [cons [vector-ref v n] l]]]]]
+
+[micro quasiquote
+ [ast [l]
+   [spot [mcons f l r]
+     [if [and [pair? r]
+              [eq? [head r] cite]
+              [eq? [head [tail r]] [tail f]]
+              [pair? l]
+              [eq? [head l] cite]
+              [eq? [head [tail l]] [head f]]]
+         [if [or [procedure? f] [number? f] [string? f]]
+               f
+               [list cite f]]
+         [if [eqv? l vector]
+               [apply l [eval r]]
+               [list cons l r]
+               ]]]
+   [spot [mappend f l r]
+     [if [or [null? [tail f]]
+             [and [pair? r]
+                  [eq? [head r] cite]
+                  [eq? [head [tail r]] []]]]
+         l
+         [list append l r]]]
+   [spot [foo level form]
+     [chlet [[not [pair? form]]
+             [if [or [procedure? form] [number? form] [string? form]]
+                    form
+                    [list cite form]]
+               ]
+           [[eq? quasiquote [head form]]
+            [mcons form quasiquote [foo [+ level 1] [tail form]]]]
+           [#t [if [zero? level]
+                   [chlet [[eq? [head form] unquote] [head [tail form]]]
+                         [[eq? [head form] unquote-splicing]
+                          [error "unquote-splicing wasnt in a list:"
+                                 form]]
+                         [[and [pair? [head form]]
+                               [eq? [head [head form]] unquote-splicing]]
+                          [mappend form [head [tail [head form]]]
+                                   [foo level [tail form]]]]
+                         [#t [mcons form [foo level [head form]]
+                                         [foo level [tail form]]]]]
+                   [chlet [[eq? [head form] unquote]
+                          [mcons form unquote [foo [- level 1]
+                                                     [tail form]]]]
+                          [[eq? [head form] unquote-splicing]
+                          [mcons form unquote-splicing
+                                      [foo [- level 1] [tail form]]]]
+                          [#t [mcons form [foo level [head form]]
+                                         [foo level [tail form]]]]]]]]]
+   [foo 0 [head [tail l]]]]]
+
+[spot [shared-tail x y]
+   [let [[len-x [length x]]
+         [len-y [length y]]]
+      [spot [shared-tail-helper x y]
+          [if
+            [eq? x y]
+            x
+            [shared-tail-helper [tail x] [tail y]]]]
+
+      [chlet
+         [[> len-x len-y]
+            [shared-tail-helper
+               [list-tail x [- len-x len-y]]
+               y]]
+         [[< len-x len-y]
+            [shared-tail-helper
+               x
+               [list-tail y [- len-y len-x]]]]
+         [#t [shared-tail-helper x y]]]]]
+
+[unless [defined? dynamic-wind]
+   [let
+      [  [*active-windings* []]
+         [outer-env [current-environment]]]
+
+      [spot before-func head]
+      [spot after-func  tail]
+      [spot make-winding cons]
+
+      [spot [activate-winding! new]
+         [[before-func new]]
+         [set! *active-windings* [cons new *active-windings*]]]
+      [spot [deactivate-top-winding!]
+         [let [[old-top [head *active-windings*]]]
+            [set! *active-windings* [tail *active-windings*]]
+            [[after-func old-top]]]]
+
+      [spot [set-active-windings! new-ws]
+         [unless [eq? new-ws *active-windings*]
+            [let [[shared [shared-tail new-ws *active-windings*]]]
+
+               [spot [pop-many]
+                  [unless [eq? *active-windings* shared]
+                     [deactivate-top-winding!]
+                     [pop-many]]]
+               [spot [push-many new-ws]
+                  [unless [eq? new-ws shared]
+                     [push-many [tail new-ws]]
+                     [activate-winding! [head new-ws]]]]
+
+               [pop-many]
+               [push-many new-ws]]]]
+
+      [eval
+         [spot call-with-current-continuation
+             [let [[old-c/cc call-with-current-continuation]]
+                 [ast [func]
+                   [old-c/cc
+                       [ast [continuation]
+                          [func
+                             [let [[current-ws *active-windings*]]
+                               [ast [x]
+                                   [set-active-windings! current-ws]
+                                   [continuation x]]]]]]]]]
+         outer-env]
+      [eval
+         [spot dynamic-wind
+             [ast [before thunk after]
+                 [activate-winding! [make-winding before after]]
+                 [let [[result [thunk]]]
+                    [deactivate-top-winding!]
+                    result]]]
+         outer-env]]]
+
+[spot call/cc call-with-current-continuation]
+
+[spot [atom? x]
+  [not [pair? x]]]
+  
+[spot [equal? x y]
+     [chlet
+          [[pair? x]
+               [and [pair? y]
+                    [equal? [head x] [head y]]
+                    [equal? [tail x] [tail y]]]]
+          [[vector? x]
+               [and [vector? y] [vector-equal? x y]]]
+          [[string? x]
+               [and [string? y] [string=? x y]]]
+          [else [eqv? x y]]]]
+
+[micro do
+  [ast [do-micro]
+    [apply [ast [do vars endtest . body]
+             [let [[do-loop [gensym]]]
+               [let* [[do-loop
+                     [ast [map [ast [x]
+                                           [if [pair? x] [head x] x]]
+                                       vars]
+                             [if [head endtest]
+                               [start @[tail endtest]]
+                               [start
+                                  @body
+                                 [do-loop
+                                   @[map [ast [x]
+                                             [chlet
+                                              [[not [pair? x]] x]
+                                              [[< [length x] 3] [head x]]
+                                              [else [head [tail [tail x]]]]]]
+                                        vars]]]]]]]
+                  [do-loop
+                    @[map [ast [x]
+                              [if [and [pair? x] [tail x]]
+                               [head [tail x]]
+                               []]]
+                        vars]]]]]
+      do-micro]]]
+
+[spot [generic-member cmp obj lst]
+  [chlet
+    [[null? lst] #f]
+    [[cmp obj [head lst]] lst]
+    [else [generic-member cmp obj [tail lst]]]]]
+
+[spot [memq obj lst]
+     [generic-member eq? obj lst]]
+[spot [memv obj lst]
+     [generic-member eqv? obj lst]]
+[spot [member obj lst]
+     [generic-member equal? obj lst]]
+
+[spot [generic-assoc cmp obj alst]
+     [chlet
+          [[null? alst] #f]
+          [[cmp obj [caar alst]] [head alst]]
+          [else [generic-assoc cmp obj [tail alst]]]]]
+
+[spot [assq obj alst]
+     [generic-assoc eq? obj alst]]
+[spot [assv obj alst]
+     [generic-assoc eqv? obj alst]]
+[spot [assoc obj alst]
+     [generic-assoc equal? obj alst]]
+
+[spot [acons x y z] [cons [cons x y] z]]
+
+[micro [spot-with-return form]
+     [spot [cadr form]
+          [call/cc [ast [return] @[cddr form]]]]]
+
+[spot *handlers* [list]]
+
+[spot [push-handler proc]
+     [set! *handlers* [cons proc *handlers*]]]
+
+[spot [pop-handler]
+     [let [[h [head *handlers*]]]
+          [set! *handlers* [tail *handlers*]]
+          h]]
+
+[spot [more-handlers?]
+     [pair? *handlers*]]
+
+[spot [throw . x]
+     [if [more-handlers?]
+          [apply [pop-handler]]
+          [apply error x]]]
+
+[micro [catch form]
+     [let [[label [gensym]]]
+          [call/cc [ast [exit]
+               [push-handler [ast [] [exit [cadr form]]]]
+               [let [[label [start @[cddr form]]]]
+                    [pop-handler]
+                    label]]]]]
+
+[spot *error-hook* throw]
+
+[micro [make-environment form]
+     [apply [ast []
+               @[tail form]
+               [current-environment]]]]
+
+[spot-micro [eval-polymorphic x . envl]
+  [display envl]
+  [let$ [[env [if [null? envl] [current-environment] [eval [head envl]]]]
+         [xval [eval x env]]]
+    [if [closure? xval]
+      [make-closure [get-closure-code xval] env]
+      xval]]]
+
+[spot *colon-hook* eval]
+
+[spot [input-output-port? p]
+     [and [input-port? p] [output-port? p]]]
+
+[spot [close-port p]
+     [chlet
+          [[input-output-port? p] [close-input-port p] [close-output-port p]]
+          [[input-port? p] [close-input-port p]]
+          [[output-port? p] [close-output-port p]]
+          [else [throw "Not a port" p]]]]
+
+[spot [call-with-input-file s p]
+     [let [[inport [open-input-file s]]]
+          [if [eq? inport #f]
+               #f
+               [let [[res [p inport]]]
+                    [close-input-port inport]
+                    res]]]]
+
+[spot [call-with-output-file s p]
+     [let [[outport [open-output-file s]]]
+          [if [eq? outport #f]
+               #f
+               [let [[res [p outport]]]
+                    [close-output-port outport]
+                    res]]]]
+
+[spot [with-input-from-file s p]
+     [let [[inport [open-input-file s]]]
+          [if [eq? inport #f]
+               #f
+               [let [[prev-inport [current-input-port]]]
+                    [set-input-port inport]
+                    [let [[res [p]]]
+                         [close-input-port inport]
+                         [set-input-port prev-inport]
+                         res]]]]]
+
+[spot [with-output-to-file s p]
+     [let [[outport [open-output-file s]]]
+          [if [eq? outport #f]
+               #f
+               [let [[prev-outport [current-output-port]]]
+                    [set-output-port outport]
+                    [let [[res [p]]]
+                         [close-output-port outport]
+                         [set-output-port prev-outport]
+                         res]]]]]
+
+[spot [with-input-output-from-to-files si so p]
+     [let [[inport [open-input-file si]]
+           [outport [open-input-file so]]]
+          [if [not [and inport outport]]
+               [start
+                    [close-input-port inport]
+                    [close-output-port outport]
+                    #f]
+               [let [[prev-inport [current-input-port]]
+                     [prev-outport [current-output-port]]]
+                    [set-input-port inport]
+                    [set-output-port outport]
+                    [let [[res [p]]]
+                         [close-input-port inport]
+                         [close-output-port outport]
+                         [set-input-port prev-inport]
+                         [set-output-port prev-outport]
+                         res]]]]]
+
+[spot *seed* 1]
+[spot [random-next]
+     [let$ [[a 16807] [m 2147483647] [q [quotient m a]] [r [modulo m a]]]
+          [set! *seed*
+               [-   [* a [- *seed*
+                         [* [quotient *seed* q] q]]]
+                    [* [quotient *seed* q] r]]]
+          [if [< *seed* 0] [set! *seed* [+ *seed* m]]]
+        *seed*]]
+          
+[spot *features* [srfi-0 tinyscheme]]
+
+[spot-micro [chlet-expand . chlet-action-list]
+  [chlet-expand-runtime chlet-action-list]]
+
+[spot [chlet-expand-runtime chlet-action-list]
+  [if [null? chlet-action-list]
+      #t
+      [if [chlet-eval [caar chlet-action-list]]
+          [start @[cdar chlet-action-list]]
+          [chlet-expand-runtime [tail chlet-action-list]]]]]
+
+[spot [chlet-eval-and chlet-list]
+  [foldr [ast [x y] [and [chlet-eval x] [chlet-eval y]]] #t chlet-list]]
+
+[spot [chlet-eval-or chlet-list]
+  [foldr [ast [x y] [or [chlet-eval x] [chlet-eval y]]] #f chlet-list]]
+
+[spot [chlet-eval chletition]
+  [chlet
+   [[symbol? chletition]
+       [if [member chletition *features*] #t #f]]
+    [[eq? chletition #t] #t]
+    [[eq? chletition #f] #f]
+    [else [choose [head chletition]
+            [[and] [chlet-eval-and [tail chletition]]]
+            [[or] [chlet-eval-or [tail chletition]]]
+            [[not] [if [not [null? [cddr chletition]]]
+                     [error "chlet-expand : not takes 1 argument"]
+                     [not [chlet-eval [cadr chletition]]]]]
+            [else [error "chlet-expand : unknown operator" [head chletition]]]]]]]
+
+[gc-verbose #f]
+
+[micro [loop . body]
+  [let [[loop-label [gensym]]]
+    [start
+      [spot loop-label [ast [] [start @body [loop-label]]]]
+      [loop-label]]]]
+
+[micro [= var val]
+  [spot var val]]
+
+[micro [if-else cond then els keyword]
+  [if cond then keyword]]
+
+[micro [do . body]
+  [start @body]]
+  
+[spot [to-number x]
+  [if [number? x] 
+    x
+    [if [string? x]
+      [let [[n [string->number x]]]
+        [if n n 0]]
+      0]]]
+
+[spot [input-num prompt]
+  [let [[s [input prompt]]]
+    [to-number s]]]
