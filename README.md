@@ -19,22 +19,19 @@ The design philosophy of **Lax** prioritizes intuitive abstractions over unneces
 
 The Lax compiler is designed to be modern and efficient. It supports standard character processing, allowing developers to work with text and data in a natural way. The internal logic is optimized to handle string operations without the burden of manual bit-level manipulation found in older systems.
 
-## Commands and Syntax
+##Commands and Syntax
 
 The instruction set is concise and powerful, containing a total of **143 commands** (137 defined in `com.h` and 6 core interfaces in `Lax.c`). All commands are strictly lowercase and follow a logical, easy-to-remember structure.
 
 **Example Syntax Logic:**
 
 * Functions and execution calls are structured for maximum clarity.
-* Text comments or metadata are enclosed in pluses: `+ Example comment +`.
+* Text comments or metadata like assembly language: `; Example comment`.
 * High-level abstractions handle I/O operations, keeping the code clean and readable.
 
 ## License and Restrictions
 
-**No License.**
+The project is completely open source, and you can download and edit it. It is also licensed under the Lax MIT License.
 
 All rights are reserved by Lax Inc.
-
-* **Copying is strictly prohibited.**
-* The redistribution of source code, binaries, or the Lax compiler logic is not permitted.
-* Unauthorized use of the Lax trademark or the `Lax REPL CLI` interface design is forbidden.
+This means that use and distribution are permitted, but only with edits and with a note indicating that you edited it and forked it from Lax Inc.
