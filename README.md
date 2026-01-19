@@ -11,7 +11,7 @@ The design philosophy of **Lax** prioritizes intuitive abstractions over unneces
 * **File Extension:** `.lx`
 * **Execution Model:** Direct execution / Native Linux Binary
 * **Paradigm:** High-level Multi-paradigm / Functional-Logic
-* **Instruction Set:** Total of 143 core commands (137 operations in `com.h` and 6 interface functions in `Lax.c`)
+* **Instruction Set:** Total of 143 core commands (137 operations in `com.h` and 6 interface functions in `Lax.c` example `help` or `exit` etc.)
 
 ## Core Mechanics
 
@@ -19,7 +19,7 @@ The design philosophy of **Lax** prioritizes intuitive abstractions over unneces
 
 The Lax compiler is designed to be modern and efficient. It supports standard character processing, allowing developers to work with text and data in a natural way. The internal logic is optimized to handle string operations without the burden of manual bit-level manipulation found in older systems.
 
-##Commands and Syntax
+## Commands and Syntax
 
 The instruction set is concise and powerful, containing a total of **143 commands** (137 defined in `com.h` and 6 core interfaces in `Lax.c`). All commands are strictly lowercase and follow a logical, easy-to-remember structure.
 
